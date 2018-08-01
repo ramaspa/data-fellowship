@@ -1,0 +1,83 @@
+---
+title: "Analysing Poisonous Mushrooms"
+output: html_notebook
+---
+
+Predict which mushrooms are poisonous, by analysising their features
+
+```{r}
+# libraries
+library(ggplot2)
+library(rpart)
+library(rpart.plot)
+```
+
+```{r}
+# import the dataset
+df <- read.csv('mushrooms.csv')
+```
+
+```{r}
+# explore the data
+head(df)
+summary(df)
+```
+
+```{r}
+# visualise the data
+library(ggplot2)
+ggplot(df, aes(`odor`, fill = `class`)) + geom_bar() + labs(title =
+                    "Stacked Bar Chart", x = "odor" , y = "count of odors"  )
+```
+
+```{r}
+# create the decision tree 
+decisionTree <- rpart(class ~ .,data=df,method="class")
+```
+
+```{r}
+# create a decision tree graph
+rpart.plot(decisionTree)
+```
+```{r}
+# remove odor and create second decision tree graph
+df$odor <- NULL
+decisionTree <- rpart(class ~ .,data=df,method="class")
+rpart.plot(decisionTree)
+```
+
+```{r}
+# evaluate the model
+prediction <- predict(decisionTree, df, type="class")
+correct <- prediction == df$class
+data.frame(df$class, prediction, correct)
+
+```
+
+```{r}
+# summarise model accuracy
+print(sum(correct))
+print(nrow(df))
+print(sum(correct)/nrow(df))
+```
+
+```{r}
+# split data into test (30%) and train (70%)
+set.seed(100)  # setting seed to reproduce results of random sampling
+trainingRowIndex <- sample(1:nrow(df), 0.7*nrow(df))  # row indices for training data
+trainingData <- df[trainingRowIndex, ]  # model training data
+testData  <- df[-trainingRowIndex, ]   # test data
+```
+
+
+```{r}
+# re-run model with training data
+decisionTree2 <- rpart(class ~ ., data=trainingData, method="class")
+rpart.plot(decisionTree2)
+```
+
+```{r}
+# look at predictions using our test data
+prediction2 <- predict(decisionTree2, testData, type="class")
+sum(prediction2 == testData$class)/nrow(testData)
+```
